@@ -1,0 +1,5 @@
+somebool: false
+somestring: "from_base"
+somesecret: "secret"
+somestruct:
+  someint: 9
