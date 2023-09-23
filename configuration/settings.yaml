@@ -1,1 +1,2 @@
-somestring: "from_runtime"
+somebool: true
+someoptionalstring: "optional_from_runtime"

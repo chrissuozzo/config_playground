@@ -1,9 +1,7 @@
 [package]
-name = "config_testing"
+name = "config_playground"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 config = { version = "0.13", default-features = false, features = [
@@ -17,3 +15,4 @@ serde_with = "3.3.0"
 secrecy = { version = "0.8", features = ["serde"] }
 clap = { version = "4.1.1", features = ["derive"] }
 anyhow = "1.0.40"
+const-str = "0.5.6"
