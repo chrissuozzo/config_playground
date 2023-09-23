@@ -34,12 +34,12 @@ struct Cli {
     input_file: Option<PathBuf>,
 
     #[clap(flatten)]
-    cli_settings: CliSettings,
+    optional_settings: OptionalSettings,
 }
 
 #[skip_serializing_none]
 #[derive(serde::Serialize, Clone, Debug, Args)]
-struct CliSettings {
+struct OptionalSettings {
     /// somestring setting
     #[arg(long)]
     somestring: Option<String>,
@@ -62,33 +62,36 @@ struct CliSettings {
 ///        API secrets, database connection params, etc. We prefix our env-vars
 ///        with the (shouty-snake converted) cargo-provided app name instead of
 ///        using the more generic "APP" to prevent collisions.
-///     4. **(Optional) CLI arguments** : Only for CLI apps, these have the
-///        highest priority, as they are passed in by the user upon execution.
+///     4. **(Optional) Input arguments** : These are optional settings passed
+///        in by the caller upon execution. In this CLI example the user could
+///        pass these settings as input arguments, but this same idea holds for
+///        other types of applications, such as a lambda/cloud-function that
+///        receives some query params at startup.
 ///        The `config` crate isn't really designed to source values from
 ///        structs (though this would be a great `derive` macro!), so we instead
 ///        leverage the ability to add a 'file' from a serde-serialized JSON
-///        string of our CLI settings struct. This has the added benefit of
-///        stripping out any optional fields that were never set.  
+///        string of our `OptionalSettings` struct. This has the added benefit
+///        of stripping out any optional fields that were never set.
 ///
 /// See [Rain's Rust CLI recommendations][1]
 /// [1]: https://rust-cli-recommendations.sunshowers.io/configuration.html
 ///
-fn get_configuration(cli_settings: CliSettings) -> anyhow::Result<Settings> {
+fn get_configuration(optional_settings: OptionalSettings) -> anyhow::Result<Settings> {
     static BASE_CFG: &str = include_str!("../configuration/base.yaml");
     static APP_NAME: &str = convert_ascii_case!(shouty_snake, std::env!("CARGO_PKG_NAME"));
 
     let runtime_path = std::env::current_dir().context("Failed to determine current directory")?;
     let runtime_cfg = runtime_path.join("configuration/settings.yaml");
-    // kindof hacky, but seems to be the easiest solution 🤷‍♂️
-    let cli_settings_json =
-        serde_json::to_string(&cli_settings).context("Couldn't parse command line args")?;
+    // kindof hacky, but seems to be the easiest solution...
+    let input_cfg = serde_json::to_string(&optional_settings)
+        .context("Couldn't parse user provided settings")?;
 
     let settings = config::Config::builder()
         .add_source(config::File::from_str(BASE_CFG, config::FileFormat::Yaml))
         .add_source(config::File::from(runtime_cfg))
         .add_source(config::Environment::with_prefix(APP_NAME).separator("__"))
         .add_source(config::File::from_str(
-            cli_settings_json.as_str(),
+            input_cfg.as_str(),
             config::FileFormat::Json,
         ))
         .build()
@@ -101,8 +104,8 @@ fn get_configuration(cli_settings: CliSettings) -> anyhow::Result<Settings> {
 
 /// This program is a playground for testing configuration layering.
 fn main() {
-    let cli_settings = Cli::parse().cli_settings;
-    let settings = get_configuration(cli_settings).expect("Failed to parse configuration");
+    let optional_settings = Cli::parse().optional_settings;
+    let settings = get_configuration(optional_settings).expect("Failed to parse configuration");
 
     println!("Settings: {:?}", settings);
     println!("Secret: {}", settings.somesecret.expose_secret());
