@@ -1,0 +1,7 @@
+somebool = false
+somestring = "from_base"
+somesecret = "secret"
+someoptionalstring = "optional_from_base"
+
+[somestruct]
+someint = 9
