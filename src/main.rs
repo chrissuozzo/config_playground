@@ -77,17 +77,17 @@ struct OptionalSettings {
 /// [1]: https://rust-cli-recommendations.sunshowers.io/configuration.html
 ///
 fn get_configuration(optional_settings: OptionalSettings) -> anyhow::Result<Settings> {
-    static BASE_CFG: &str = include_str!("../configuration/base.yaml");
+    static BASE_CFG: &str = include_str!("../configuration/base.toml");
     static APP_NAME: &str = convert_ascii_case!(shouty_snake, std::env!("CARGO_PKG_NAME"));
 
     let runtime_path = std::env::current_dir().context("Failed to determine current directory")?;
-    let runtime_cfg = runtime_path.join("configuration/settings.yaml");
+    let runtime_cfg = runtime_path.join("configuration/settings.toml");
     // kindof hacky, but seems to be the easiest solution...
     let input_cfg = serde_json::to_string(&optional_settings)
         .context("Couldn't parse user provided settings")?;
 
     let settings = config::Config::builder()
-        .add_source(config::File::from_str(BASE_CFG, config::FileFormat::Yaml))
+        .add_source(config::File::from_str(BASE_CFG, config::FileFormat::Toml))
         .add_source(config::File::from(runtime_cfg))
         .add_source(config::Environment::with_prefix(APP_NAME).separator("__"))
         .add_source(config::File::from_str(

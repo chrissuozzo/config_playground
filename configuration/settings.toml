@@ -1,0 +1,2 @@
+somebool = true
+someoptionalstring = "optional_from_runtime"
